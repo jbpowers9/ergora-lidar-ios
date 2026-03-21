@@ -1,0 +1,56 @@
+{
+  "source": "/Users/deborahpowers/Desktop/ErgoraLiDAR/ErgoraLiDAR/Views/ContentView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Ergora LiDAR",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 41
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scan QR Code",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 49
+        }
+      },
+      {
+        "comment": "",
+        "key": "Enter Report ID",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 60
+        }
+      },
+      {
+        "comment": "",
+        "key": "Report UUID",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 62
+        }
+      },
+      {
+        "comment": "",
+        "key": "Token",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 69
+        }
+      },
+      {
+        "comment": "",
+        "key": "Connect",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 82
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,40 @@
+{
+  "source": "/Users/deborahpowers/Desktop/ErgoraLiDAR/ErgoraLiDAR/Views/SuccessView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "No scan data.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 40
+        }
+      },
+      {
+        "comment": "",
+        "key": "Submitted",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "Your sketch was sent to Ergora.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 46
+        }
+      }
+    ]
+  },
+  "version": 1
+}

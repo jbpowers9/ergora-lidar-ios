@@ -1,0 +1,109 @@
+{
+  "" : {
+    "diagnostics" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraLiDAR-primary.dia",
+    "emit-module-dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraLiDAR-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraLiDAR-primary-emit-module.dia",
+    "pch" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraLiDAR-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraLiDAR-primary.swiftdeps"
+  },
+  "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  },
+  "/Users/deborahpowers/Desktop/ErgoraLiDAR/ErgoraLiDAR/ErgoraLiDARApp.swift" : {
+    "const-values" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraLiDARApp.swiftconstvalues",
+    "dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraLiDARApp.d",
+    "diagnostics" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraLiDARApp.dia",
+    "index-unit-output-path" : "/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraLiDARApp.o",
+    "llvm-bc" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraLiDARApp.bc",
+    "object" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraLiDARApp.o",
+    "swift-dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraLiDARApp.swiftdeps",
+    "swiftmodule" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraLiDARApp~partial.swiftmodule"
+  },
+  "/Users/deborahpowers/Desktop/ErgoraLiDAR/ErgoraLiDAR/Models/ScanData.swift" : {
+    "const-values" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ScanData.swiftconstvalues",
+    "dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ScanData.d",
+    "diagnostics" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ScanData.dia",
+    "index-unit-output-path" : "/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ScanData.o",
+    "llvm-bc" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ScanData.bc",
+    "object" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ScanData.o",
+    "swift-dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ScanData.swiftdeps",
+    "swiftmodule" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ScanData~partial.swiftmodule"
+  },
+  "/Users/deborahpowers/Desktop/ErgoraLiDAR/ErgoraLiDAR/Services/ErgoraAPIClient.swift" : {
+    "const-values" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraAPIClient.swiftconstvalues",
+    "dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraAPIClient.d",
+    "diagnostics" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraAPIClient.dia",
+    "index-unit-output-path" : "/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraAPIClient.o",
+    "llvm-bc" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraAPIClient.bc",
+    "object" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraAPIClient.o",
+    "swift-dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraAPIClient.swiftdeps",
+    "swiftmodule" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ErgoraAPIClient~partial.swiftmodule"
+  },
+  "/Users/deborahpowers/Desktop/ErgoraLiDAR/ErgoraLiDAR/Services/RoomDataProcessor.swift" : {
+    "const-values" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/RoomDataProcessor.swiftconstvalues",
+    "dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/RoomDataProcessor.d",
+    "diagnostics" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/RoomDataProcessor.dia",
+    "index-unit-output-path" : "/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/RoomDataProcessor.o",
+    "llvm-bc" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/RoomDataProcessor.bc",
+    "object" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/RoomDataProcessor.o",
+    "swift-dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/RoomDataProcessor.swiftdeps",
+    "swiftmodule" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/RoomDataProcessor~partial.swiftmodule"
+  },
+  "/Users/deborahpowers/Desktop/ErgoraLiDAR/ErgoraLiDAR/Views/ContentView.swift" : {
+    "const-values" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ContentView.swiftconstvalues",
+    "dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ContentView.d",
+    "diagnostics" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ContentView.dia",
+    "index-unit-output-path" : "/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ContentView.o",
+    "swift-dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ContentView.swiftdeps",
+    "swiftmodule" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ContentView~partial.swiftmodule"
+  },
+  "/Users/deborahpowers/Desktop/ErgoraLiDAR/ErgoraLiDAR/Views/QRScannerView.swift" : {
+    "const-values" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/QRScannerView.swiftconstvalues",
+    "dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/QRScannerView.d",
+    "diagnostics" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/QRScannerView.dia",
+    "index-unit-output-path" : "/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/QRScannerView.o",
+    "llvm-bc" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/QRScannerView.bc",
+    "object" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/QRScannerView.o",
+    "swift-dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/QRScannerView.swiftdeps",
+    "swiftmodule" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/QRScannerView~partial.swiftmodule"
+  },
+  "/Users/deborahpowers/Desktop/ErgoraLiDAR/ErgoraLiDAR/Views/RoomScanView.swift" : {
+    "const-values" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/RoomScanView.swiftconstvalues",
+    "dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/RoomScanView.d",
+    "diagnostics" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/RoomScanView.dia",
+    "index-unit-output-path" : "/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/RoomScanView.o",
+    "llvm-bc" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/RoomScanView.bc",
+    "object" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/RoomScanView.o",
+    "swift-dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/RoomScanView.swiftdeps",
+    "swiftmodule" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/RoomScanView~partial.swiftmodule"
+  },
+  "/Users/deborahpowers/Desktop/ErgoraLiDAR/ErgoraLiDAR/Views/ScanResultView.swift" : {
+    "const-values" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ScanResultView.swiftconstvalues",
+    "dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ScanResultView.d",
+    "diagnostics" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ScanResultView.dia",
+    "index-unit-output-path" : "/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ScanResultView.o",
+    "llvm-bc" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ScanResultView.bc",
+    "object" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ScanResultView.o",
+    "swift-dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ScanResultView.swiftdeps",
+    "swiftmodule" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/ScanResultView~partial.swiftmodule"
+  },
+  "/Users/deborahpowers/Desktop/ErgoraLiDAR/ErgoraLiDAR/Views/SuccessView.swift" : {
+    "const-values" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/SuccessView.swiftconstvalues",
+    "dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/SuccessView.d",
+    "diagnostics" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/SuccessView.dia",
+    "index-unit-output-path" : "/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/SuccessView.o",
+    "llvm-bc" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/SuccessView.bc",
+    "object" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/SuccessView.o",
+    "swift-dependencies" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/SuccessView.swiftdeps",
+    "swiftmodule" : "/Users/deborahpowers/Desktop/ErgoraLiDAR/.derivedData/Build/Intermediates.noindex/ErgoraLiDAR.build/Debug-iphoneos/ErgoraLiDAR.build/Objects-normal/arm64/SuccessView~partial.swiftmodule"
+  }
+}

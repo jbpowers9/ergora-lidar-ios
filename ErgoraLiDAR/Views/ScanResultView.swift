@@ -11,9 +11,19 @@ struct ScanResultView: View {
 
     @State private var isSubmitting = false
     @State private var showAPIError = false
+    @State private var apiErrorTitle = "Could Not Submit"
     @State private var apiErrorMessage = ""
+    @State private var showSessionExpired = false
     @State private var showNetworkError = false
     @State private var networkErrorMessage = ""
+
+    @State private var editingRoomIndex: Int?
+    @State private var draftRoomName: String = ""
+
+    private static let quickLabels = [
+        "Living Room", "Kitchen", "Primary Bedroom", "Bedroom", "Bathroom",
+        "Half Bath", "Dining Room", "Office", "Garage", "Basement", "Other",
+    ]
 
     var body: some View {
         ZStack {
@@ -26,26 +36,8 @@ struct ScanResultView: View {
 
                         Text("Rooms")
                             .font(.headline)
-                        ForEach(Array(payload.rooms.enumerated()), id: \.offset) { _, room in
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(room.name)
-                                    .font(.title3.weight(.semibold))
-                                Text(roomAreaLabel(area: room.area))
-                                    .font(.body)
-                                Text(
-                                    String(
-                                        format: "≈ %.1f × %.1f ft",
-                                        room.dimensions.width,
-                                        room.dimensions.length
-                                    )
-                                )
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                            }
-                            .padding(12)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color(.secondarySystemBackground))
-                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        ForEach(Array(payload.rooms.enumerated()), id: \.offset) { index, room in
+                            roomRow(index: index, room: room)
                         }
 
                         summaryRow(title: "Total GLA", value: glaLabel(total: payload.totalGLA))
@@ -90,10 +82,15 @@ struct ScanResultView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-        .alert("Could Not Submit", isPresented: $showAPIError) {
+        .alert(apiErrorTitle, isPresented: $showAPIError) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(apiErrorMessage)
+        }
+        .alert("Session Expired", isPresented: $showSessionExpired) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Your session expired. Go back and scan the QR code again to reconnect.")
         }
         .alert("Network Error", isPresented: $showNetworkError) {
             Button("Retry") {
@@ -103,6 +100,90 @@ struct ScanResultView: View {
         } message: {
             Text(networkErrorMessage)
         }
+    }
+
+    @ViewBuilder
+    private func roomRow(index: Int, room: RoomData) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if editingRoomIndex == index {
+                TextField("Room name", text: $draftRoomName)
+                    .font(.title3.weight(.semibold))
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit {
+                        applyRoomName(at: index)
+                    }
+
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 8)], spacing: 8) {
+                    ForEach(Self.quickLabels, id: \.self) { label in
+                        Button {
+                            draftRoomName = label
+                            applyRoomName(at: index)
+                        } label: {
+                            Text(label)
+                                .font(.caption.weight(.medium))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 8)
+                                .frame(maxWidth: .infinity)
+                                .background(Color(.tertiarySystemBackground))
+                                .foregroundStyle(.primary)
+                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
+                HStack {
+                    Button("Cancel") {
+                        editingRoomIndex = nil
+                    }
+                    .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Save") {
+                        applyRoomName(at: index)
+                    }
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.ergoraTeal)
+                }
+            } else {
+                Button {
+                    editingRoomIndex = index
+                    draftRoomName = room.name
+                } label: {
+                    Text(room.name)
+                        .font(.title3.weight(.semibold))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .foregroundStyle(.primary)
+                }
+                .buttonStyle(.plain)
+            }
+
+            Text(roomAreaLabel(area: room.area))
+                .font(.body)
+            Text(
+                String(
+                    format: "≈ %.1f × %.1f ft",
+                    room.dimensions.width,
+                    room.dimensions.length
+                )
+            )
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func applyRoomName(at index: Int) {
+        let trimmed = draftRoomName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, var payload = flow.sketchPayload, index < payload.rooms.count else {
+            editingRoomIndex = nil
+            return
+        }
+        payload.rooms[index].name = trimmed
+        flow.sketchPayload = payload
+        editingRoomIndex = nil
     }
 
     private func roomAreaLabel(area: Double) -> String {
@@ -133,11 +214,18 @@ struct ScanResultView: View {
     }
 
     private func submit() async {
+        let token = flow.token.trimmingCharacters(in: .whitespacesAndNewlines)
+        if token.isEmpty {
+            apiErrorTitle = "No Session"
+            apiErrorMessage = "No session token. Please scan the QR code again."
+            showAPIError = true
+            return
+        }
         guard let payload = flow.sketchPayload else { return }
         isSubmitting = true
         let result = await ErgoraAPIClient.submitSketch(
             reportId: flow.reportId,
-            token: flow.token,
+            token: token,
             payload: payload
         )
         isSubmitting = false
@@ -149,11 +237,17 @@ struct ScanResultView: View {
             case .transport(let underlying):
                 networkErrorMessage = underlying.localizedDescription
                 showNetworkError = true
-            case .httpStatus(_, let message):
-                apiErrorMessage = message ?? error.localizedDescription
-                showAPIError = true
+            case .httpStatus(let code, let message):
+                if code == 401 {
+                    showSessionExpired = true
+                } else {
+                    apiErrorTitle = "Could Not Submit"
+                    apiErrorMessage = message ?? error.localizedDescription
+                    showAPIError = true
+                }
             case .invalidURL, .decodingFailed:
-                apiErrorMessage = error.localizedDescription ?? "Unknown error"
+                apiErrorTitle = "Could Not Submit"
+                apiErrorMessage = error.localizedDescription
                 showAPIError = true
             }
         }

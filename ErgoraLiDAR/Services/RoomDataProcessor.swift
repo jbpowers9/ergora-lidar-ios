@@ -22,18 +22,7 @@ enum RoomDataProcessor {
             return false
         }
 
-        let totalFloorAreaM2: Double = {
-            if floorSurfaces.isEmpty {
-                let fromCenters = wallFootprintAreaFromWallCentersM2(walls: room.walls)
-                if fromCenters > 0 {
-                    return fromCenters
-                }
-                return wallBoundingFootprintAreaM2(walls: room.walls)
-            }
-            return floorSurfaces.reduce(0) { partial, surface in
-                partial + floorSurfaceAreaM2(surface)
-            }
-        }()
+        let totalFloorAreaM2 = totalFloorAreaM2(from: room, floorSurfaces: floorSurfaces)
 
         let wallHeightsM = room.walls.compactMap { surface -> Double? in
             guard case .wall = surface.category else { return nil }
@@ -54,7 +43,9 @@ enum RoomDataProcessor {
         let rooms: [RoomData]
         if sections.isEmpty {
             let areaFt2 = totalFloorAreaM2 * sqMetersToSqFeet
-            let dims = dimensionsFromAreaM2(totalFloorAreaM2)
+            let dims =
+                dimensionsFromLargestFloorSurface(floorSurfaces)
+                ?? dimensionsFromAreaM2(totalFloorAreaM2)
             rooms = [
                 RoomData(
                     name: "Room 1",
@@ -67,22 +58,34 @@ enum RoomDataProcessor {
                 )
             ]
         } else {
-            let count = sections.count
-            let areaPerRoomM2 = totalFloorAreaM2 / Double(count)
-            let areaPerRoomFt2 = areaPerRoomM2 * sqMetersToSqFeet
-            let dims = dimensionsFromAreaM2(areaPerRoomM2)
+            let perSectionAreaM2 = perSectionFloorAreasM2(
+                sections: sections,
+                totalFloorAreaM2: totalFloorAreaM2
+            )
 
             let centers = sections.map(\.center)
             let windowAssignments = assign(openings: room.windows, toSections: centers)
             let doorAssignments = assign(openings: room.doors, toSections: centers)
 
-            rooms = sections.enumerated().map { index, _ in
+            let largestSection = largestSectionByMirroredArea(sections)
+            let dimsFromLargestSection = largestSection.flatMap { dimensionsFromMirroredSection($0) }
+
+            rooms = sections.enumerated().map { index, section in
+                let areaM2 = perSectionAreaM2[index]
+                let areaFt2 = areaM2 * sqMetersToSqFeet
                 let windowsForRoom = windowAssignments[index].map { opening(from: $0) }
                 let doorsForRoom = doorAssignments[index].map { opening(from: $0) }
+
+                let dims =
+                    dimensionsFromMirroredSection(section)
+                    ?? dimsFromLargestSection
+                    ?? dimensionsFromNearestFloorSurface(to: section.center, floors: floorSurfaces)
+                    ?? dimensionsFromAreaM2(areaM2)
+
                 return RoomData(
                     name: "Room \(index + 1)",
                     floor: selectedFloor,
-                    area: areaPerRoomFt2,
+                    area: areaFt2,
                     dimensions: dims,
                     windows: windowsForRoom,
                     doors: doorsForRoom,
@@ -101,6 +104,108 @@ enum RoomDataProcessor {
             storiesCount: max(1, floorLevels.count),
             scanId: scanId
         )
+    }
+
+    // MARK: - Total floor area (priority order)
+
+    /// PRIMARY: `CapturedRoom.sections` — sum `area` when exposed (public API or runtime fields via Mirror).
+    /// FALLBACK 1: sum floor-surface areas (polygon / bounding face).
+    /// FALLBACK 2: `wallFootprintAreaFromWallCentersM2`.
+    /// FALLBACK 3: `wallBoundingFootprintAreaM2`.
+    private static func totalFloorAreaM2(from room: CapturedRoom, floorSurfaces: [CapturedRoom.Surface]) -> Double {
+        if !room.sections.isEmpty {
+            let areas = room.sections.map { mirroredSectionAreaM2($0) }
+            if !areas.contains(where: { $0 == nil }) {
+                let sum = areas.compactMap { $0 }.reduce(0, +)
+                if sum > 0 { return sum }
+            }
+        }
+
+        if !floorSurfaces.isEmpty {
+            let sum = floorSurfaces.reduce(0) { $0 + floorSurfaceAreaM2($1) }
+            if sum > 0 { return sum }
+        }
+
+        let fromCenters = wallFootprintAreaFromWallCentersM2(walls: room.walls)
+        if fromCenters > 0 { return fromCenters }
+
+        return wallBoundingFootprintAreaM2(walls: room.walls)
+    }
+
+    /// Per-section area in m²: prefer mirrored per-section `area`; else split `totalFloorAreaM2` evenly.
+    private static func perSectionFloorAreasM2(sections: [CapturedRoom.Section], totalFloorAreaM2: Double) -> [Double] {
+        let mirrored = sections.map { mirroredSectionAreaM2($0) }
+        let allPositive = mirrored.allSatisfy { ($0 ?? 0) > 0 }
+        if allPositive, mirrored.allSatisfy({ $0 != nil }) {
+            return mirrored.map { $0! }
+        }
+        let each = totalFloorAreaM2 / Double(max(sections.count, 1))
+        return Array(repeating: each, count: sections.count)
+    }
+
+    /// Reads `area` from `Section` if present (future SDKs may expose it publicly).
+    private static func mirroredSectionAreaM2(_ section: CapturedRoom.Section) -> Double? {
+        for child in Mirror(reflecting: section).children {
+            guard let label = child.label, label == "area" else { continue }
+            if let d = child.value as? Double { return d }
+            if let f = child.value as? Float { return Double(f) }
+        }
+        return nil
+    }
+
+    /// Reads `dimensions` as `simd_float3` from `Section` if present; width/length use X and Z in meters.
+    private static func dimensionsFromMirroredSection(_ section: CapturedRoom.Section) -> RoomDimensions? {
+        for child in Mirror(reflecting: section).children {
+            guard let label = child.label, label == "dimensions" else { continue }
+            if let sim = child.value as? simd_float3 {
+                let a = Double(sim.x)
+                let b = Double(sim.z)
+                let wM = max(a, b)
+                let lM = min(a, b)
+                return RoomDimensions(width: wM * metersToFeet, length: lM * metersToFeet)
+            }
+        }
+        return nil
+    }
+
+    private static func largestSectionByMirroredArea(_ sections: [CapturedRoom.Section]) -> CapturedRoom.Section? {
+        sections.max { (mirroredSectionAreaM2($0) ?? 0) < (mirroredSectionAreaM2($1) ?? 0) }
+    }
+
+    private static func dimensionsFromLargestFloorSurface(_ floors: [CapturedRoom.Surface]) -> RoomDimensions? {
+        guard !floors.isEmpty else { return nil }
+        let best = floors.max(by: { floorSurfaceAreaM2($0) < floorSurfaceAreaM2($1) })!
+        let d = best.dimensions
+        let a = Double(d.x)
+        let b = Double(d.z)
+        let wM = max(a, b)
+        let lM = min(a, b)
+        return RoomDimensions(width: wM * metersToFeet, length: lM * metersToFeet)
+    }
+
+    private static func dimensionsFromNearestFloorSurface(to center: simd_float3, floors: [CapturedRoom.Surface]) -> RoomDimensions? {
+        guard !floors.isEmpty else { return nil }
+        let cx = Double(center.x)
+        let cz = Double(center.z)
+        var best: CapturedRoom.Surface?
+        var bestDist = Double.greatestFiniteMagnitude
+        for f in floors {
+            let t = f.transform.columns.3
+            let dx = Double(t.x) - cx
+            let dz = Double(t.z) - cz
+            let dist = dx * dx + dz * dz
+            if dist < bestDist {
+                bestDist = dist
+                best = f
+            }
+        }
+        guard let surface = best else { return nil }
+        let d = surface.dimensions
+        let a = Double(d.x)
+        let b = Double(d.z)
+        let wM = max(a, b)
+        let lM = min(a, b)
+        return RoomDimensions(width: wM * metersToFeet, length: lM * metersToFeet)
     }
 
     private static func opening(from surface: CapturedRoom.Surface) -> Opening {
@@ -166,7 +271,6 @@ enum RoomDataProcessor {
         return RoomDimensions(width: sideFt, length: sideFt)
     }
 
-    /// Fallback footprint when no floor surfaces: axis-aligned box from wall **center** positions (XZ only).
     private static func wallFootprintAreaFromWallCentersM2(walls: [CapturedRoom.Surface]) -> Double {
         let centers: [simd_float3] = walls.compactMap { wall in
             guard case .wall = wall.category else { return nil }
@@ -184,7 +288,6 @@ enum RoomDataProcessor {
         return w * d
     }
 
-    /// Assigns each opening surface to the section index whose center is closest in the XZ plane.
     private static func assign(
         openings: [CapturedRoom.Surface],
         toSections centers: [simd_float3]

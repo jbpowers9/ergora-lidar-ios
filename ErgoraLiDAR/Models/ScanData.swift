@@ -6,7 +6,7 @@
 import Foundation
 
 struct RoomData: Codable, Hashable {
-    let name: String
+    var name: String
     let floor: Int
     let area: Double
     let dimensions: RoomDimensions
@@ -26,7 +26,7 @@ struct Opening: Codable, Hashable {
 }
 
 struct SketchPayload: Codable, Hashable {
-    let rooms: [RoomData]
+    var rooms: [RoomData]
     let totalGLA: Double
     let totalWindowArea: Double
     let storiesCount: Int

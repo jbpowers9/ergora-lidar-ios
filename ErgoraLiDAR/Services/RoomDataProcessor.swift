@@ -9,15 +9,12 @@ import simd
 
 enum RoomDataProcessor {
     private static let metersToFeet = 3.28084
-
-    /// Buckets vertical translation (meters) to a 1-based floor index (~3 m per story).
-    private static func floorLevelFromTranslationY(_ yMeters: Float) -> Int {
-        let y = Double(yMeters)
-        return max(1, Int(round(y / 3.0)) + 1)
-    }
+    /// Square meters → square feet (exact conversion factor).
+    private static let sqMetersToSqFeet = 10.7639
 
     /// Converts RoomPlan `CapturedRoom` into a `SketchPayload` for Ergora.
-    static func sketchPayload(from room: CapturedRoom) -> SketchPayload {
+    /// - Parameter selectedFloor: User-selected floor for this scan (0 = basement, 1–3 = above-grade floors).
+    static func sketchPayload(from room: CapturedRoom, selectedFloor: Int) -> SketchPayload {
         let scanId = UUID().uuidString
 
         let floorSurfaces = room.floors.filter { surface in
@@ -27,6 +24,10 @@ enum RoomDataProcessor {
 
         let totalFloorAreaM2: Double = {
             if floorSurfaces.isEmpty {
+                let fromCenters = wallFootprintAreaFromWallCentersM2(walls: room.walls)
+                if fromCenters > 0 {
+                    return fromCenters
+                }
                 return wallBoundingFootprintAreaM2(walls: room.walls)
             }
             return floorSurfaces.reduce(0) { partial, surface in
@@ -52,18 +53,12 @@ enum RoomDataProcessor {
 
         let rooms: [RoomData]
         if sections.isEmpty {
-            let areaFt2 = totalFloorAreaM2 * metersToFeet * metersToFeet
+            let areaFt2 = totalFloorAreaM2 * sqMetersToSqFeet
             let dims = dimensionsFromAreaM2(totalFloorAreaM2)
-            let avgFloorY: Float = {
-                if floorSurfaces.isEmpty { return 0 }
-                let sum = floorSurfaces.reduce(0.0) { $0 + Double($1.transform.columns.3.y) }
-                return Float(sum / Double(floorSurfaces.count))
-            }()
-            let floorLevel = floorLevelFromTranslationY(avgFloorY)
             rooms = [
                 RoomData(
                     name: "Room 1",
-                    floor: floorLevel,
+                    floor: selectedFloor,
                     area: areaFt2,
                     dimensions: dims,
                     windows: windowOpenings,
@@ -74,20 +69,19 @@ enum RoomDataProcessor {
         } else {
             let count = sections.count
             let areaPerRoomM2 = totalFloorAreaM2 / Double(count)
-            let areaPerRoomFt2 = areaPerRoomM2 * metersToFeet * metersToFeet
+            let areaPerRoomFt2 = areaPerRoomM2 * sqMetersToSqFeet
             let dims = dimensionsFromAreaM2(areaPerRoomM2)
 
             let centers = sections.map(\.center)
             let windowAssignments = assign(openings: room.windows, toSections: centers)
             let doorAssignments = assign(openings: room.doors, toSections: centers)
 
-            rooms = sections.enumerated().map { index, section in
+            rooms = sections.enumerated().map { index, _ in
                 let windowsForRoom = windowAssignments[index].map { opening(from: $0) }
                 let doorsForRoom = doorAssignments[index].map { opening(from: $0) }
-                let floorLevel = section.story > 0 ? section.story : floorLevelFromTranslationY(section.center.y)
                 return RoomData(
                     name: "Room \(index + 1)",
-                    floor: max(1, floorLevel),
+                    floor: selectedFloor,
                     area: areaPerRoomFt2,
                     dimensions: dims,
                     windows: windowsForRoom,
@@ -167,8 +161,27 @@ enum RoomDataProcessor {
         guard areaM2 > 0 else {
             return RoomDimensions(width: 0, length: 0)
         }
-        let sideFt = sqrt(areaM2) * metersToFeet
+        let areaFt2 = areaM2 * sqMetersToSqFeet
+        let sideFt = sqrt(areaFt2)
         return RoomDimensions(width: sideFt, length: sideFt)
+    }
+
+    /// Fallback footprint when no floor surfaces: axis-aligned box from wall **center** positions (XZ only).
+    private static func wallFootprintAreaFromWallCentersM2(walls: [CapturedRoom.Surface]) -> Double {
+        let centers: [simd_float3] = walls.compactMap { wall in
+            guard case .wall = wall.category else { return nil }
+            let t = wall.transform.columns.3
+            return simd_float3(t.x, t.y, t.z)
+        }
+        guard !centers.isEmpty else { return 0 }
+        let xs = centers.map { Double($0.x) }
+        let zs = centers.map { Double($0.z) }
+        guard let minX = xs.min(), let maxX = xs.max(), let minZ = zs.min(), let maxZ = zs.max() else {
+            return 0
+        }
+        let w = max(0, maxX - minX)
+        let d = max(0, maxZ - minZ)
+        return w * d
     }
 
     /// Assigns each opening surface to the section index whose center is closest in the XZ plane.

@@ -9,6 +9,11 @@ import RoomPlan
 import SwiftUI
 import UIKit
 
+private struct FloorOption: Hashable {
+    let title: String
+    let floorNumber: Int
+}
+
 /// Hosts `RoomCaptureView` and bridges RoomPlan callbacks. Session delegate conformance is implemented by
 /// `RoomScanCaptureCoordinator` (`RoomCaptureSessionDelegate`).
 struct RoomScanView: View {
@@ -20,26 +25,42 @@ struct RoomScanView: View {
     @State private var showProcessError = false
     @State private var processErrorMessage = ""
     @State private var isProcessing = false
+    @State private var hasStartedScan = false
+    @State private var selectedFloorOption: FloorOption = FloorOption(title: "First Floor", floorNumber: 1)
+
+    private static let floorOptions: [FloorOption] = [
+        FloorOption(title: "First Floor", floorNumber: 1),
+        FloorOption(title: "Second Floor", floorNumber: 2),
+        FloorOption(title: "Third Floor", floorNumber: 3),
+        FloorOption(title: "Basement", floorNumber: 0),
+    ]
 
     var body: some View {
         ZStack {
             Color.white.ignoresSafeArea()
-            RoomCaptureRepresentable(
-                driver: driver,
-                onCapturedRoom: { room in
-                    isProcessing = false
-                    let payload = RoomDataProcessor.sketchPayload(from: room)
-                    flow.sketchPayload = payload
-                    path.append(AppRoute.scanResult)
-                },
-                onError: { error in
-                    isProcessing = false
-                    processErrorMessage = error.localizedDescription
-                    showProcessError = true
-                },
-                onProcessingChange: { isProcessing = $0 }
-            )
-            .ignoresSafeArea()
+
+            if hasStartedScan {
+                RoomCaptureRepresentable(
+                    driver: driver,
+                    onCapturedRoom: { room in
+                        isProcessing = false
+                        flow.lastCapturedRoom = room
+                        let payload = RoomDataProcessor.sketchPayload(from: room, selectedFloor: flow.selectedScanFloor)
+                        flow.sketchPayload = payload
+                        if path.count > 0 {
+                            path.removeLast()
+                        }
+                        path.append(AppRoute.scanResult)
+                    },
+                    onError: { error in
+                        isProcessing = false
+                        processErrorMessage = error.localizedDescription
+                        showProcessError = true
+                    },
+                    onProcessingChange: { isProcessing = $0 }
+                )
+                .ignoresSafeArea()
+            }
 
             VStack {
                 HStack {
@@ -55,7 +76,23 @@ struct RoomScanView: View {
                 .padding()
                 Spacer()
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Walk slowly through each room. The app will detect walls, doors, and windows automatically.")
+                    if !hasStartedScan {
+                        Text("Which floor are you scanning?")
+                            .font(.headline)
+                        Picker("Floor", selection: $selectedFloorOption) {
+                            ForEach(Self.floorOptions, id: \.self) { opt in
+                                Text(opt.title).tag(opt)
+                            }
+                        }
+                        .pickerStyle(.wheel)
+                        .frame(maxWidth: .infinity)
+                        .onChange(of: selectedFloorOption) { _, newValue in
+                            flow.selectedScanFloor = newValue.floorNumber
+                        }
+
+                        Text(
+                            "Scan one floor at a time. Walk slowly through each room on this floor, then tap Done. Scan each floor separately."
+                        )
                         .font(.body)
                         .foregroundStyle(.primary)
                         .padding(16)
@@ -63,20 +100,45 @@ struct RoomScanView: View {
                         .background(.ultraThinMaterial)
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
-                    Button {
-                        isProcessing = true
-                        driver.stopCapture()
-                    } label: {
-                        Text("Done Scanning")
-                            .font(.title3.weight(.semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 18)
-                            .background(Color.ergoraTeal)
-                            .foregroundStyle(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        Button {
+                            flow.selectedScanFloor = selectedFloorOption.floorNumber
+                            hasStartedScan = true
+                        } label: {
+                            Text("Start scanning")
+                                .font(.title3.weight(.semibold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 18)
+                                .background(Color.ergoraTeal)
+                                .foregroundStyle(.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        Text(
+                            "Scan one floor at a time. Walk slowly through each room on this floor, then tap Done. Scan each floor separately."
+                        )
+                        .font(.body)
+                        .foregroundStyle(.primary)
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+                        Button {
+                            isProcessing = true
+                            driver.stopCapture()
+                        } label: {
+                            Text("Done Scanning")
+                                .font(.title3.weight(.semibold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 18)
+                                .background(Color.ergoraTeal)
+                                .foregroundStyle(.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(isProcessing)
                     }
-                    .buttonStyle(.plain)
-                    .disabled(isProcessing)
                 }
                 .padding(24)
             }
@@ -86,6 +148,7 @@ struct RoomScanView: View {
             if !ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh) {
                 showLiDARAlert = true
             }
+            flow.selectedScanFloor = selectedFloorOption.floorNumber
         }
         .alert("LiDAR Required", isPresented: $showLiDARAlert) {
             Button("OK", role: .cancel) {

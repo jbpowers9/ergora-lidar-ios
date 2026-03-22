@@ -4,6 +4,7 @@
 //
 
 import Combine
+import RoomPlan
 import SwiftUI
 
 extension Color {
@@ -15,6 +16,10 @@ final class ScanFlowModel: ObservableObject {
     @Published var reportId: UUID = UUID()
     @Published var token: String = ""
     @Published var sketchPayload: SketchPayload?
+    /// Floor number for the current scan session (0 = basement, 1–3 = floors). Drives all rooms in `sketchPayload`.
+    @Published var selectedScanFloor: Int = 1
+    /// Retained so scan data survives navigation; cleared on Rescan.
+    @Published var lastCapturedRoom: CapturedRoom?
     @Published var scanSessionID = UUID()
 }
 

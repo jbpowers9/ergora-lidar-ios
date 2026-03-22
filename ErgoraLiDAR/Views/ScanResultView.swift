@@ -30,7 +30,7 @@ struct ScanResultView: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text(room.name)
                                     .font(.title3.weight(.semibold))
-                                Text(String(format: "%.0f sq ft", room.area))
+                                Text(roomAreaLabel(area: room.area))
                                     .font(.body)
                                 Text(
                                     String(
@@ -48,7 +48,7 @@ struct ScanResultView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
 
-                        summaryRow(title: "Total GLA", value: String(format: "%.0f sq ft", payload.totalGLA))
+                        summaryRow(title: "Total GLA", value: glaLabel(total: payload.totalGLA))
                         summaryRow(title: "Total window area", value: String(format: "%.0f sq ft", payload.totalWindowArea))
                         summaryRow(title: "Stories", value: "\(payload.storiesCount)")
 
@@ -89,6 +89,7 @@ struct ScanResultView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
         .alert("Could Not Submit", isPresented: $showAPIError) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -102,6 +103,20 @@ struct ScanResultView: View {
         } message: {
             Text(networkErrorMessage)
         }
+    }
+
+    private func roomAreaLabel(area: Double) -> String {
+        if area <= 0 {
+            return "— sq ft"
+        }
+        return String(format: "%.0f sq ft", area)
+    }
+
+    private func glaLabel(total: Double) -> String {
+        if total <= 0 {
+            return "— sq ft"
+        }
+        return String(format: "%.0f sq ft", total)
     }
 
     private func summaryRow(title: String, value: String) -> some View {
@@ -147,6 +162,7 @@ struct ScanResultView: View {
     private func rescan() {
         flow.scanSessionID = UUID()
         flow.sketchPayload = nil
+        flow.lastCapturedRoom = nil
         path = NavigationPath()
         path.append(AppRoute.roomScan)
     }

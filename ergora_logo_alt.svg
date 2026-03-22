@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120">
+  <defs>
+    <linearGradient id="brandGradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0ea5e9"/>
+      <stop offset="100%" style="stop-color:#6366f1"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Logo Mark - Hexagon with neural network nodes -->
+  <g transform="translate(15, 15)">
+    <!-- Outer hexagon -->
+    <polygon points="45,5 80,25 80,65 45,85 10,65 10,25" 
+             fill="none" stroke="url(#brandGradient2)" stroke-width="3"/>
+    <!-- Inner connecting lines (neural network) -->
+    <line x1="45" y1="30" x2="30" y2="50" stroke="url(#brandGradient2)" stroke-width="2"/>
+    <line x1="45" y1="30" x2="60" y2="50" stroke="url(#brandGradient2)" stroke-width="2"/>
+    <line x1="30" y1="50" x2="60" y2="50" stroke="url(#brandGradient2)" stroke-width="2"/>
+    <line x1="30" y1="50" x2="45" y2="70" stroke="url(#brandGradient2)" stroke-width="2"/>
+    <line x1="60" y1="50" x2="45" y2="70" stroke="url(#brandGradient2)" stroke-width="2"/>
+    <!-- Nodes -->
+    <circle cx="45" cy="30" r="5" fill="#6366f1"/>
+    <circle cx="30" cy="50" r="5" fill="#0ea5e9"/>
+    <circle cx="60" cy="50" r="5" fill="#0ea5e9"/>
+    <circle cx="45" cy="70" r="5" fill="#6366f1"/>
+  </g>
+  
+  <!-- Company Name -->
+  <text x="110" y="68" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="46" font-weight="700" letter-spacing="-1" fill="#0f172a">
+    ergora
+  </text>
+  <text x="290" y="68" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="46" font-weight="400" fill="url(#brandGradient2)">
+    .ai
+  </text>
+  
+</svg>

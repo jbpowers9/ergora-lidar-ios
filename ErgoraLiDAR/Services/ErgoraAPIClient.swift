@@ -2,6 +2,9 @@
 //  ErgoraAPIClient.swift
 //  ErgoraLiDAR
 //
+//  Scan session tokens are issued by the Ergora web app (see Next.js `scan-token` route). There is no
+//  token-refresh API on device; a new QR scan is required after expiry. Server-side expiry is configured
+//  in the web repo (team note: consider extending past 15 minutes, e.g. 60 minutes, in `scan-token/route.ts`).
 
 import Foundation
 

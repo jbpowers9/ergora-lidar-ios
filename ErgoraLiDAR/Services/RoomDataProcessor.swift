@@ -13,7 +13,7 @@ enum RoomDataProcessor {
     private static let sqMetersToSqFeet = 10.7639
 
     /// Converts RoomPlan `CapturedRoom` into a `SketchPayload` for Ergora.
-    /// - Parameter selectedFloor: User-selected floor for this scan (0 = basement, 1–3 = above-grade floors).
+    /// - Parameter selectedFloor: 0 = basement, 1–3 = floors, **-1** = garage, **-2** = other area (porches, sheds, etc.).
     static func sketchPayload(from room: CapturedRoom, selectedFloor: Int) -> SketchPayload {
         let scanId = UUID().uuidString
 
@@ -39,6 +39,7 @@ enum RoomDataProcessor {
         let totalWindowAreaSqFt = windowOpenings.reduce(0) { $0 + $1.width * $1.height }
 
         let sections = room.sections
+        let (isGarageFloor, isOtherAreaFloor) = roomFlags(for: selectedFloor)
 
         let rooms: [RoomData]
         if sections.isEmpty {
@@ -46,23 +47,21 @@ enum RoomDataProcessor {
             let dims =
                 dimensionsFromLargestFloorSurface(floorSurfaces)
                 ?? dimensionsFromAreaM2(totalFloorAreaM2)
+            let baseName = detectRoomType(from: room, index: 0)
             rooms = [
                 RoomData(
-                    name: detectRoomType(from: room, index: 0),
+                    name: prefixedRoomName(base: baseName, selectedFloor: selectedFloor),
                     floor: selectedFloor,
                     area: areaFt2,
                     dimensions: dims,
                     windows: windowOpenings,
                     doors: doorOpenings,
-                    ceilingHeight: ceilingHeightFt
+                    ceilingHeight: ceilingHeightFt,
+                    isGarage: isGarageFloor,
+                    isOtherArea: isOtherAreaFloor
                 )
             ]
         } else {
-            let perSectionAreaM2 = perSectionFloorAreasM2(
-                sections: sections,
-                totalFloorAreaM2: totalFloorAreaM2
-            )
-
             let centers = sections.map(\.center)
             let windowAssignments = assign(openings: room.windows, toSections: centers)
             let doorAssignments = assign(openings: room.doors, toSections: centers)
@@ -71,7 +70,11 @@ enum RoomDataProcessor {
             let dimsFromLargestSection = largestSection.flatMap { dimensionsFromMirroredSection($0) }
 
             rooms = sections.enumerated().map { index, section in
-                let areaM2 = perSectionAreaM2[index]
+                let areaM2 = sectionFloorAreaM2(
+                    section: section,
+                    sectionsCount: sections.count,
+                    totalFloorAreaM2: totalFloorAreaM2
+                )
                 let areaFt2 = areaM2 * sqMetersToSqFeet
                 let windowsForRoom = windowAssignments[index].map { opening(from: $0) }
                 let doorsForRoom = doorAssignments[index].map { opening(from: $0) }
@@ -82,28 +85,47 @@ enum RoomDataProcessor {
                     ?? dimensionsFromNearestFloorSurface(to: section.center, floors: floorSurfaces)
                     ?? dimensionsFromAreaM2(areaM2)
 
+                let baseName = detectRoomType(from: room, index: index)
                 return RoomData(
-                    name: detectRoomType(from: room, index: index),
+                    name: prefixedRoomName(base: baseName, selectedFloor: selectedFloor),
                     floor: selectedFloor,
                     area: areaFt2,
                     dimensions: dims,
                     windows: windowsForRoom,
                     doors: doorsForRoom,
-                    ceilingHeight: ceilingHeightFt
+                    ceilingHeight: ceilingHeightFt,
+                    isGarage: isGarageFloor,
+                    isOtherArea: isOtherAreaFloor
                 )
             }
         }
 
-        let totalGLA = rooms.reduce(0) { $0 + $1.area }
+        let totalGLA = rooms.filter { !$0.isGarage && !$0.isOtherArea }.reduce(0) { $0 + $1.area }
+        let garageAreaSqFt = rooms.filter(\.isGarage).reduce(0) { $0 + $1.area }
+        let otherAreaSqFt = rooms.filter(\.isOtherArea).reduce(0) { $0 + $1.area }
         let floorLevels = Set(rooms.map(\.floor))
 
         return SketchPayload(
             rooms: rooms,
             totalGLA: totalGLA,
+            garageAreaSqFt: garageAreaSqFt,
+            otherAreaSqFt: otherAreaSqFt,
             totalWindowArea: totalWindowAreaSqFt,
             storiesCount: max(1, floorLevels.count),
             scanId: scanId
         )
+    }
+
+    private static func roomFlags(for selectedFloor: Int) -> (isGarage: Bool, isOtherArea: Bool) {
+        (selectedFloor == -1, selectedFloor == -2)
+    }
+
+    private static func prefixedRoomName(base: String, selectedFloor: Int) -> String {
+        switch selectedFloor {
+        case -1: return "Garage \(base)"
+        case -2: return "Other \(base)"
+        default: return base
+        }
     }
 
     // MARK: - Total floor area (priority order)
@@ -132,15 +154,20 @@ enum RoomDataProcessor {
         return wallBoundingFootprintAreaM2(walls: room.walls)
     }
 
-    /// Per-section area in m²: prefer mirrored per-section `area`; else split `totalFloorAreaM2` evenly.
-    private static func perSectionFloorAreasM2(sections: [CapturedRoom.Section], totalFloorAreaM2: Double) -> [Double] {
-        let mirrored = sections.map { mirroredSectionAreaM2($0) }
-        let allPositive = mirrored.allSatisfy { ($0 ?? 0) > 0 }
-        if allPositive, mirrored.allSatisfy({ $0 != nil }) {
-            return mirrored.map { $0! }
+    /// Per-section floor area in m²: mirrored `area` → mirrored `dimensions` (x × z) → even split of `totalFloorAreaM2`.
+    private static func sectionFloorAreaM2(
+        section: CapturedRoom.Section,
+        sectionsCount: Int,
+        totalFloorAreaM2: Double
+    ) -> Double {
+        if let a = mirroredSectionAreaM2(section), a > 0 {
+            return a
         }
-        let each = totalFloorAreaM2 / Double(max(sections.count, 1))
-        return Array(repeating: each, count: sections.count)
+        if let a = areaM2FromMirroredXZDimensions(section), a > 0 {
+            return a
+        }
+        guard sectionsCount > 0 else { return 0 }
+        return totalFloorAreaM2 / Double(sectionsCount)
     }
 
     /// Reads `area` from `Section` if present (future SDKs may expose it publicly).
@@ -149,6 +176,20 @@ enum RoomDataProcessor {
             guard let label = child.label, label == "area" else { continue }
             if let d = child.value as? Double { return d }
             if let f = child.value as? Float { return Double(f) }
+        }
+        return nil
+    }
+
+    /// Floor footprint from mirrored `dimensions` x and z (m²).
+    private static func areaM2FromMirroredXZDimensions(_ section: CapturedRoom.Section) -> Double? {
+        for child in Mirror(reflecting: section).children {
+            guard let label = child.label, label == "dimensions" else { continue }
+            if let sim = child.value as? simd_float3 {
+                let x = Double(sim.x)
+                let z = Double(sim.z)
+                let a = abs(x * z)
+                return a > 0 ? a : nil
+            }
         }
         return nil
     }

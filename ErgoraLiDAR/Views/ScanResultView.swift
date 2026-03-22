@@ -15,14 +15,14 @@ struct ScanResultView: View {
     @State private var showAPIError = false
     @State private var apiErrorTitle = "Could Not Submit"
     @State private var apiErrorMessage = ""
-    @State private var showSessionExpired = false
+    @State private var showUnauthorizedReturnStart = false
     @State private var showNetworkError = false
     @State private var networkErrorMessage = ""
 
     @State private var editingRoomIndex: Int?
     @State private var draftRoomName: String = ""
 
-    @State private var showPostSubmitPhotoPrompt = false
+    @State private var showFloorSubmittedPrompt = false
     @State private var showInteriorPhotoCapture = false
     @State private var showPhotoCaptureDenied = false
     @State private var showPhotoCaptureUnavailable = false
@@ -48,6 +48,12 @@ struct ScanResultView: View {
                         }
 
                         summaryRow(title: "Total GLA", value: glaLabel(total: payload.totalGLA))
+                        if payload.garageAreaSqFt > 0 {
+                            summaryRow(title: "Garage area", value: glaLabel(total: payload.garageAreaSqFt))
+                        }
+                        if payload.otherAreaSqFt > 0 {
+                            summaryRow(title: "Other area", value: glaLabel(total: payload.otherAreaSqFt))
+                        }
                         summaryRow(title: "Total window area", value: String(format: "%.0f sq ft", payload.totalWindowArea))
                         summaryRow(title: "Stories", value: "\(payload.storiesCount)")
 
@@ -94,10 +100,14 @@ struct ScanResultView: View {
         } message: {
             Text(apiErrorMessage)
         }
-        .alert("Session Expired", isPresented: $showSessionExpired) {
-            Button("OK", role: .cancel) {}
+        .alert("Session Expired", isPresented: $showUnauthorizedReturnStart) {
+            Button("Return to Start") {
+                path = NavigationPath()
+            }
         } message: {
-            Text("Your session expired. Go back and scan the QR code again to reconnect.")
+            Text(
+                "Your session token is no longer valid. Tap Return to Start to scan a new QR code. Your scan results on this screen stay in memory until you submit or rescan."
+            )
         }
         .alert("Network Error", isPresented: $showNetworkError) {
             Button("Retry") {
@@ -107,15 +117,21 @@ struct ScanResultView: View {
         } message: {
             Text(networkErrorMessage)
         }
-        .alert("Sketch Submitted", isPresented: $showPostSubmitPhotoPrompt) {
+        .alert("Floor Submitted", isPresented: $showFloorSubmittedPrompt) {
+            Button("Scan Another Floor") {
+                flow.scanSessionID = UUID()
+                flow.sketchPayload = nil
+                flow.lastCapturedRoom = nil
+                path.removeLast()
+            }
             Button("Add Photos") {
                 beginInteriorPhotoCapture()
             }
-            Button("Not Now", role: .cancel) {
+            Button("Done") {
                 path.append(AppRoute.success)
             }
         } message: {
-            Text("Would you like to add interior photos now?")
+            Text("Scan another floor or finish?")
         }
         .alert("Camera Access Needed", isPresented: $showPhotoCaptureDenied) {
             Button("Cancel", role: .cancel) {}
@@ -297,7 +313,7 @@ struct ScanResultView: View {
         isSubmitting = false
         switch result {
         case .success:
-            showPostSubmitPhotoPrompt = true
+            showFloorSubmittedPrompt = true
         case .failure(let error):
             switch error {
             case .transport(let underlying):
@@ -305,7 +321,8 @@ struct ScanResultView: View {
                 showNetworkError = true
             case .httpStatus(let code, let message):
                 if code == 401 {
-                    showSessionExpired = true
+                    // No server refresh token for scan sessions; user rescans QR from home (see ErgoraAPIClient header).
+                    showUnauthorizedReturnStart = true
                 } else {
                     apiErrorTitle = "Could Not Submit"
                     apiErrorMessage = message ?? error.localizedDescription

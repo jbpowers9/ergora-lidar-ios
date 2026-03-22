@@ -33,6 +33,8 @@ struct RoomScanView: View {
         FloorOption(title: "Second Floor", floorNumber: 2),
         FloorOption(title: "Third Floor", floorNumber: 3),
         FloorOption(title: "Basement", floorNumber: 0),
+        FloorOption(title: "Garage", floorNumber: -1),
+        FloorOption(title: "Other Area", floorNumber: -2),
     ]
 
     var body: some View {

@@ -22,12 +22,14 @@ final class ScanFlowModel: ObservableObject {
     /// Retained so scan data survives navigation; cleared on Rescan.
     @Published var lastCapturedRoom: CapturedRoom?
     @Published var scanSessionID = UUID()
+    @Published var floorScans: [FloorScan] = []
 }
 
 enum AppRoute: Hashable {
     case qrScanner
     case roomScan
     case scanResult
+    case floorScanList
     case success
 }
 
@@ -102,6 +104,9 @@ struct ContentView: View {
                         .id(flow.scanSessionID)
                 case .scanResult:
                     ScanResultView(path: $path)
+                        .environmentObject(flow)
+                case .floorScanList:
+                    FloorScanListView(path: $path)
                         .environmentObject(flow)
                 case .success:
                     SuccessView(path: $path)

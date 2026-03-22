@@ -3,29 +3,14 @@
 //  ErgoraLiDAR
 //
 
-import AVFoundation
 import SwiftUI
-import UIKit
 
 struct ScanResultView: View {
     @EnvironmentObject private var flow: ScanFlowModel
     @Binding var path: NavigationPath
 
-    @State private var isSubmitting = false
-    @State private var showAPIError = false
-    @State private var apiErrorTitle = "Could Not Submit"
-    @State private var apiErrorMessage = ""
-    @State private var showUnauthorizedReturnStart = false
-    @State private var showNetworkError = false
-    @State private var networkErrorMessage = ""
-
     @State private var editingRoomIndex: Int?
     @State private var draftRoomName: String = ""
-
-    @State private var showFloorSubmittedPrompt = false
-    @State private var showInteriorPhotoCapture = false
-    @State private var showPhotoCaptureDenied = false
-    @State private var showPhotoCaptureUnavailable = false
 
     private static let quickLabels = [
         "Living Room", "Kitchen", "Primary Bedroom", "Bedroom", "Bathroom",
@@ -59,9 +44,9 @@ struct ScanResultView: View {
 
                         HStack(spacing: 16) {
                             Button {
-                                Task { await submit() }
+                                saveFloorAndContinue()
                             } label: {
-                                Text("Submit to Ergora")
+                                Text("Save Floor & Continue")
                                     .font(.title3.weight(.semibold))
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 18)
@@ -70,7 +55,7 @@ struct ScanResultView: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                             }
                             .buttonStyle(.plain)
-                            .disabled(isSubmitting || flow.sketchPayload == nil)
+                            .disabled(flow.sketchPayload == nil)
 
                             Button {
                                 rescan()
@@ -95,93 +80,25 @@ struct ScanResultView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-        .alert(apiErrorTitle, isPresented: $showAPIError) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(apiErrorMessage)
-        }
-        .alert("Session Expired", isPresented: $showUnauthorizedReturnStart) {
-            Button("Return to Start") {
-                path = NavigationPath()
-            }
-        } message: {
-            Text(
-                "Your session token is no longer valid. Tap Return to Start to scan a new QR code. Your scan results on this screen stay in memory until you submit or rescan."
-            )
-        }
-        .alert("Network Error", isPresented: $showNetworkError) {
-            Button("Retry") {
-                Task { await submit() }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text(networkErrorMessage)
-        }
-        .alert("Floor Submitted", isPresented: $showFloorSubmittedPrompt) {
-            Button("Scan Another Floor") {
-                flow.scanSessionID = UUID()
-                flow.sketchPayload = nil
-                flow.lastCapturedRoom = nil
-                path.removeLast()
-            }
-            Button("Add Photos") {
-                beginInteriorPhotoCapture()
-            }
-            Button("Done") {
-                path.append(AppRoute.success)
-            }
-        } message: {
-            Text("Scan another floor or finish?")
-        }
-        .alert("Camera Access Needed", isPresented: $showPhotoCaptureDenied) {
-            Button("Cancel", role: .cancel) {}
-            if let url = URL(string: UIApplication.openSettingsURLString) {
-                Button("Settings") {
-                    UIApplication.shared.open(url)
-                }
-            }
-        } message: {
-            Text("Allow camera access in Settings to add interior photos.")
-        }
-        .alert("Camera Unavailable", isPresented: $showPhotoCaptureUnavailable) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text("This device cannot capture photos.")
-        }
-        .fullScreenCover(isPresented: $showInteriorPhotoCapture) {
-            InteriorPhotoCaptureView(
-                reportId: flow.reportId,
-                token: flow.token.trimmingCharacters(in: .whitespacesAndNewlines),
-                onFinish: {
-                    showInteriorPhotoCapture = false
-                    path.append(AppRoute.success)
-                }
-            )
-        }
         .tint(Color.ergoraTeal)
     }
 
-    private func beginInteriorPhotoCapture() {
-        guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
-            showPhotoCaptureUnavailable = true
-            return
+    private func saveFloorAndContinue() {
+        guard let payload = flow.sketchPayload else { return }
+        let totalArea = payload.rooms.reduce(0) { $0 + $1.area }
+        let updated = FloorScan(
+            floorName: FloorScan.displayName(for: flow.selectedScanFloor),
+            floorNumber: flow.selectedScanFloor,
+            rooms: payload.rooms,
+            totalArea: totalArea,
+            scanId: payload.scanId
+        )
+        if let idx = flow.floorScans.firstIndex(where: { $0.scanId == updated.scanId }) {
+            flow.floorScans[idx] = updated
+        } else {
+            flow.floorScans.append(updated)
         }
-        switch AVCaptureDevice.authorizationStatus(for: .video) {
-        case .authorized:
-            showInteriorPhotoCapture = true
-        case .notDetermined:
-            AVCaptureDevice.requestAccess(for: .video) { granted in
-                DispatchQueue.main.async {
-                    if granted {
-                        showInteriorPhotoCapture = true
-                    } else {
-                        showPhotoCaptureDenied = true
-                    }
-                }
-            }
-        default:
-            showPhotoCaptureDenied = true
-        }
+        path.append(AppRoute.floorScanList)
     }
 
     @ViewBuilder
@@ -295,48 +212,10 @@ struct ScanResultView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
-    private func submit() async {
-        let token = flow.token.trimmingCharacters(in: .whitespacesAndNewlines)
-        if token.isEmpty {
-            apiErrorTitle = "No Session"
-            apiErrorMessage = "No session token. Please scan the QR code again."
-            showAPIError = true
-            return
-        }
-        guard let payload = flow.sketchPayload else { return }
-        isSubmitting = true
-        let result = await ErgoraAPIClient.submitSketch(
-            reportId: flow.reportId,
-            token: token,
-            payload: payload
-        )
-        isSubmitting = false
-        switch result {
-        case .success:
-            showFloorSubmittedPrompt = true
-        case .failure(let error):
-            switch error {
-            case .transport(let underlying):
-                networkErrorMessage = underlying.localizedDescription
-                showNetworkError = true
-            case .httpStatus(let code, let message):
-                if code == 401 {
-                    // No server refresh token for scan sessions; user rescans QR from home (see ErgoraAPIClient header).
-                    showUnauthorizedReturnStart = true
-                } else {
-                    apiErrorTitle = "Could Not Submit"
-                    apiErrorMessage = message ?? error.localizedDescription
-                    showAPIError = true
-                }
-            case .invalidURL, .decodingFailed:
-                apiErrorTitle = "Could Not Submit"
-                apiErrorMessage = error.localizedDescription
-                showAPIError = true
-            }
-        }
-    }
-
     private func rescan() {
+        if let id = flow.sketchPayload?.scanId {
+            flow.floorScans.removeAll { $0.scanId == id }
+        }
         flow.scanSessionID = UUID()
         flow.sketchPayload = nil
         flow.lastCapturedRoom = nil

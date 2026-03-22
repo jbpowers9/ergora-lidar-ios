@@ -49,9 +49,15 @@ struct RoomScanView: View {
                         flow.lastCapturedRoom = room
                         let payload = RoomDataProcessor.sketchPayload(from: room, selectedFloor: flow.selectedScanFloor)
                         flow.sketchPayload = payload
-                        if path.count > 0 {
-                            path.removeLast()
-                        }
+                        let totalArea = payload.rooms.reduce(0) { $0 + $1.area }
+                        let floorScan = FloorScan(
+                            floorName: FloorScan.displayName(for: flow.selectedScanFloor),
+                            floorNumber: flow.selectedScanFloor,
+                            rooms: payload.rooms,
+                            totalArea: totalArea,
+                            scanId: payload.scanId
+                        )
+                        flow.floorScans.append(floorScan)
                         path.append(AppRoute.scanResult)
                     },
                     onError: { error in

@@ -16,7 +16,7 @@ struct QRScannerView: View {
 
     var body: some View {
         ZStack {
-            Color.white.ignoresSafeArea()
+            Color.black.ignoresSafeArea()
             QRScannerRepresentable(
                 onCode: { string in
                     handle(code: string)
@@ -97,11 +97,13 @@ private struct QRScannerRepresentable: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: QRScannerViewController, context: Context) {}
 }
 
+/// All `AVCaptureSession` configuration and `startRunning` / `stopRunning` run on `sessionQueue` (not the main thread).
 private final class QRScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
     var onCode: ((String) -> Void)?
     var onPermissionDenied: (() -> Void)?
 
     private let session = AVCaptureSession()
+    private let sessionQueue = DispatchQueue(label: "ai.ergora.ErgoraLiDAR.qrcapture", qos: .userInitiated)
     private let previewLayer = AVCaptureVideoPreviewLayer()
 
     override func viewDidLoad() {
@@ -114,9 +116,7 @@ private final class QRScannerViewController: UIViewController, AVCaptureMetadata
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        Task { @MainActor in
-            await configureSessionIfNeeded()
-        }
+        requestAccessAndConfigure()
     }
 
     override func viewDidLayoutSubviews() {
@@ -124,57 +124,67 @@ private final class QRScannerViewController: UIViewController, AVCaptureMetadata
         previewLayer.frame = view.bounds
     }
 
-    @MainActor
-    private func configureSessionIfNeeded() {
+    private func requestAccessAndConfigure() {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
-            break
+            sessionQueue.async { [weak self] in
+                self?.configureSessionIfNeeded()
+            }
         case .notDetermined:
             AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
-                Task { @MainActor in
-                    if granted {
-                        self?.configureSessionIfNeeded()
-                    } else {
-                        self?.onPermissionDenied?()
+                guard let self else { return }
+                if granted {
+                    self.sessionQueue.async {
+                        self.configureSessionIfNeeded()
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        self.onPermissionDenied?()
                     }
                 }
             }
-            return
         default:
             onPermissionDenied?()
-            return
         }
+    }
 
-        guard session.inputs.isEmpty else {
+    /// Must run on `sessionQueue`. `commitConfiguration()` must finish before `startRunning()`.
+    private func configureSessionIfNeeded() {
+        if !session.inputs.isEmpty {
             if !session.isRunning {
-                DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                    self?.session.startRunning()
-                }
+                session.startRunning()
             }
             return
         }
+
+        session.beginConfiguration()
 
         guard let device = AVCaptureDevice.default(for: .video),
               let input = try? AVCaptureDeviceInput(device: device),
               session.canAddInput(input)
         else {
-            onPermissionDenied?()
+            session.commitConfiguration()
+            DispatchQueue.main.async { [weak self] in
+                self?.onPermissionDenied?()
+            }
             return
         }
         session.addInput(input)
 
         let output = AVCaptureMetadataOutput()
         guard session.canAddOutput(output) else {
-            onPermissionDenied?()
+            session.commitConfiguration()
+            DispatchQueue.main.async { [weak self] in
+                self?.onPermissionDenied?()
+            }
             return
         }
         session.addOutput(output)
-        output.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
+        output.setMetadataObjectsDelegate(self, queue: sessionQueue)
         output.metadataObjectTypes = [.qr]
 
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            self?.session.startRunning()
-        }
+        session.commitConfiguration()
+        session.startRunning()
     }
 
     func metadataOutput(
@@ -186,7 +196,15 @@ private final class QRScannerViewController: UIViewController, AVCaptureMetadata
               object.type == .qr,
               let value = object.stringValue
         else { return }
-        session.stopRunning()
-        onCode?(value)
+
+        sessionQueue.async { [weak self] in
+            guard let self else { return }
+            if self.session.isRunning {
+                self.session.stopRunning()
+            }
+            DispatchQueue.main.async {
+                self.onCode?(value)
+            }
+        }
     }
 }

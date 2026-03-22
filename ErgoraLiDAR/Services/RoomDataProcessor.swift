@@ -66,15 +66,16 @@ enum RoomDataProcessor {
             let windowAssignments = assign(openings: room.windows, toSections: centers)
             let doorAssignments = assign(openings: room.doors, toSections: centers)
 
-            let largestSection = largestSectionByMirroredArea(sections)
+            let sectionAreasM2 = sectionFloorAreasM2Normalized(
+                room: room,
+                sections: sections,
+                totalFloorAreaM2: totalFloorAreaM2
+            )
+            let largestSection = sections.enumerated().max(by: { sectionAreasM2[$0.offset] < sectionAreasM2[$1.offset] })?.element
             let dimsFromLargestSection = largestSection.flatMap { dimensionsFromMirroredSection($0) }
 
             rooms = sections.enumerated().map { index, section in
-                let areaM2 = sectionFloorAreaM2(
-                    section: section,
-                    sectionsCount: sections.count,
-                    totalFloorAreaM2: totalFloorAreaM2
-                )
+                let areaM2 = index < sectionAreasM2.count ? sectionAreasM2[index] : totalFloorAreaM2 / Double(sections.count)
                 let areaFt2 = areaM2 * sqMetersToSqFeet
                 let windowsForRoom = windowAssignments[index].map { opening(from: $0) }
                 let doorsForRoom = doorAssignments[index].map { opening(from: $0) }
@@ -154,26 +155,80 @@ enum RoomDataProcessor {
         return wallBoundingFootprintAreaM2(walls: room.walls)
     }
 
-    /// Per-section floor area in m²: mirrored `area` → mirrored `dimensions` (x × z) → even split of `totalFloorAreaM2`.
-    private static func sectionFloorAreaM2(
-        section: CapturedRoom.Section,
-        sectionsCount: Int,
+    /// Per-section floor areas (m²) summing to `totalFloorAreaM2`: full mirror set when available; else wall centers per section + remainder + normalization.
+    private static func sectionFloorAreasM2Normalized(
+        room: CapturedRoom,
+        sections: [CapturedRoom.Section],
         totalFloorAreaM2: Double
-    ) -> Double {
-        if let a = mirroredSectionAreaM2(section), a > 0 {
-            return a
+    ) -> [Double] {
+        let n = sections.count
+        guard n > 0 else { return [] }
+        guard totalFloorAreaM2 > 0 else { return Array(repeating: 0, count: n) }
+
+        let mirrorCandidates: [Double?] = sections.map { section in
+            if let a = mirroredSectionAreaM2(section), a > 0 { return a }
+            if let a = areaM2FromMirroredXZDimensions(section), a > 0 { return a }
+            return nil
         }
-        if let a = areaM2FromMirroredXZDimensions(section), a > 0 {
-            return a
+        if mirrorCandidates.allSatisfy({ $0 != nil }) {
+            let mirVals = mirrorCandidates.compactMap { $0 }
+            let sumMir = mirVals.reduce(0, +)
+            if sumMir > 0 {
+                return mirVals.map { totalFloorAreaM2 * $0 / sumMir }
+            }
         }
-        guard sectionsCount > 0 else { return 0 }
-        return totalFloorAreaM2 / Double(sectionsCount)
+
+        let centers = sections.map(\.center)
+        let wallSurfaces = room.walls.filter { surface in
+            if case .wall = surface.category { return true }
+            return false
+        }
+        let wallBuckets = assign(openings: wallSurfaces, toSections: centers)
+        let raw = wallBuckets.map { wallBoundingBoxPerSectionM2(walls: $0) }
+
+        let sumRaw = raw.filter { $0 > 0 }.reduce(0, +)
+        let unwalledIndices = raw.enumerated().filter { $0.element <= 0 }.map(\.offset)
+        let walledIndices = raw.enumerated().filter { $0.element > 0 }.map(\.offset)
+
+        var areas = Array(repeating: 0.0, count: n)
+
+        if sumRaw <= 0 {
+            let each = totalFloorAreaM2 / Double(n)
+            areas = Array(repeating: each, count: n)
+        } else if unwalledIndices.isEmpty {
+            for i in 0..<n {
+                areas[i] = totalFloorAreaM2 * raw[i] / sumRaw
+            }
+        } else {
+            let rem = totalFloorAreaM2 - sumRaw
+            if rem >= 0 {
+                for i in walledIndices { areas[i] = raw[i] }
+                let share = rem / Double(unwalledIndices.count)
+                for i in unwalledIndices { areas[i] = share }
+            } else {
+                for i in walledIndices {
+                    areas[i] = totalFloorAreaM2 * raw[i] / sumRaw
+                }
+            }
+        }
+
+        let sumA = areas.reduce(0, +)
+        if sumA > 0 {
+            areas = areas.map { $0 * totalFloorAreaM2 / sumA }
+        }
+        return areas
     }
 
-    /// Reads `area` from `Section` if present (future SDKs may expose it publicly).
+    /// Min/max XZ footprint (m²) from wall centers for walls assigned to one section (same logic as `wallFootprintAreaFromWallCentersM2`).
+    private static func wallBoundingBoxPerSectionM2(walls: [CapturedRoom.Surface]) -> Double {
+        wallFootprintAreaFromWallCentersM2(walls: walls)
+    }
+
+    /// Reads stored area from `Section` if present (public API or runtime fields via Mirror).
     private static func mirroredSectionAreaM2(_ section: CapturedRoom.Section) -> Double? {
+        let areaLabels = ["area", "storedArea", "_area"]
         for child in Mirror(reflecting: section).children {
-            guard let label = child.label, label == "area" else { continue }
+            guard let label = child.label, areaLabels.contains(label) else { continue }
             if let d = child.value as? Double { return d }
             if let f = child.value as? Float { return Double(f) }
         }
@@ -207,10 +262,6 @@ enum RoomDataProcessor {
             }
         }
         return nil
-    }
-
-    private static func largestSectionByMirroredArea(_ sections: [CapturedRoom.Section]) -> CapturedRoom.Section? {
-        sections.max { (mirroredSectionAreaM2($0) ?? 0) < (mirroredSectionAreaM2($1) ?? 0) }
     }
 
     private static func dimensionsFromLargestFloorSurface(_ floors: [CapturedRoom.Surface]) -> RoomDimensions? {

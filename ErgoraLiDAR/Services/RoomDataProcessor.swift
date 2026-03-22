@@ -47,7 +47,7 @@ enum RoomDataProcessor {
             let dims =
                 dimensionsFromLargestFloorSurface(floorSurfaces)
                 ?? dimensionsFromAreaM2(totalFloorAreaM2)
-            let baseName = detectRoomType(from: room, index: 0)
+            let baseName = detectRoomType(from: room, index: 0, areaSqFt: areaFt2)
             rooms = [
                 RoomData(
                     name: prefixedRoomName(base: baseName, selectedFloor: selectedFloor),
@@ -85,7 +85,7 @@ enum RoomDataProcessor {
                     ?? dimensionsFromNearestFloorSurface(to: section.center, floors: floorSurfaces)
                     ?? dimensionsFromAreaM2(areaM2)
 
-                let baseName = detectRoomType(from: room, index: index)
+                let baseName = detectRoomType(from: room, index: index, areaSqFt: areaFt2)
                 return RoomData(
                     name: prefixedRoomName(base: baseName, selectedFloor: selectedFloor),
                     floor: selectedFloor,
@@ -359,25 +359,35 @@ enum RoomDataProcessor {
 
     /// Uses `CapturedRoom.Object.Category` cases from the RoomPlan SDK (see `RoomPlan.swiftinterface`).
     /// Note: There is no `.shower` or `.diningTable`; bath uses `.bathtub`, dining uses `.table`.
-    private static func detectRoomType(from room: CapturedRoom, index: Int) -> String {
+    private static func detectRoomType(
+        from room: CapturedRoom,
+        index: Int,
+        areaSqFt: Double
+    ) -> String {
         let cats = room.objects.map(\.category)
         let hasToilet = cats.contains(.toilet)
         let hasBath = cats.contains(.bathtub)
         let hasBed = cats.contains(.bed)
-        let hasKitchen = cats.contains(.refrigerator) || cats.contains(.stove) || cats.contains(.oven)
+        let hasKitchen = cats.contains(.refrigerator)
+            || cats.contains(.stove)
+            || cats.contains(.oven)
         let hasSofa = cats.contains(.sofa)
-        let hasTV = cats.contains(.television)
         let hasWasher = cats.contains(.washerDryer)
         let hasDining = cats.contains(.table)
 
-        if hasToilet && hasBath { return "Full Bath" }
-        if hasToilet { return "Half Bath" }
+        // Bathroom requires toilet AND small area
+        // Large rooms with toilets are misdetections
+        if hasToilet && hasBath && areaSqFt < 150 {
+            return "Full Bath"
+        }
+        if hasToilet && areaSqFt < 80 {
+            return "Half Bath"
+        }
         if hasBed { return "Bedroom" }
         if hasKitchen { return "Kitchen" }
         if hasWasher { return "Laundry Room" }
-        if hasSofa && hasTV { return "Living Room" }
         if hasSofa { return "Living Room" }
-        if hasDining { return "Dining Room" }
+        if hasDining && areaSqFt < 300 { return "Dining Room" }
         return "Room \(index + 1)"
     }
 }

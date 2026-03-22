@@ -8,6 +8,7 @@ import RoomPlan
 import SwiftUI
 
 extension Color {
+    /// Brand teal #0D9488
     static let ergoraTeal = Color(red: 13 / 255, green: 148 / 255, blue: 136 / 255)
 }
 
@@ -38,8 +39,32 @@ struct ContentView: View {
         NavigationStack(path: $path) {
             ZStack {
                 Color.ergoraTeal.ignoresSafeArea()
-                VStack {
+                VStack(spacing: 16) {
                     Spacer(minLength: 0)
+
+                    Image("ErgoraLogo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 180)
+
+                    Text("LiDAR Scanner")
+                        .font(.title3.weight(.medium))
+                        .foregroundStyle(Color.ergoraTeal)
+
+                    Text("For licensed appraisers. Measurements are estimates — verify before submitting.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+
+                    Text("Requires iPhone 12 Pro or newer, or iPad Pro 2020 or newer.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+
+                    Spacer(minLength: 0)
+
                     Button {
                         path.append(AppRoute.qrScanner)
                     } label: {
@@ -55,6 +80,7 @@ struct ContentView: View {
                     }
                     .buttonStyle(.plain)
                     .padding(.horizontal, 32)
+
                     Spacer(minLength: 0)
                 }
             }

@@ -3,7 +3,9 @@
 //  ErgoraLiDAR
 //
 
+import AVFoundation
 import SwiftUI
+import UIKit
 
 struct ScanResultView: View {
     @EnvironmentObject private var flow: ScanFlowModel
@@ -19,6 +21,11 @@ struct ScanResultView: View {
 
     @State private var editingRoomIndex: Int?
     @State private var draftRoomName: String = ""
+
+    @State private var showPostSubmitPhotoPrompt = false
+    @State private var showInteriorPhotoCapture = false
+    @State private var showPhotoCaptureDenied = false
+    @State private var showPhotoCaptureUnavailable = false
 
     private static let quickLabels = [
         "Living Room", "Kitchen", "Primary Bedroom", "Bedroom", "Bathroom",
@@ -99,6 +106,65 @@ struct ScanResultView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text(networkErrorMessage)
+        }
+        .alert("Sketch Submitted", isPresented: $showPostSubmitPhotoPrompt) {
+            Button("Add Photos") {
+                beginInteriorPhotoCapture()
+            }
+            Button("Not Now", role: .cancel) {
+                path.append(AppRoute.success)
+            }
+        } message: {
+            Text("Would you like to add interior photos now?")
+        }
+        .alert("Camera Access Needed", isPresented: $showPhotoCaptureDenied) {
+            Button("Cancel", role: .cancel) {}
+            if let url = URL(string: UIApplication.openSettingsURLString) {
+                Button("Settings") {
+                    UIApplication.shared.open(url)
+                }
+            }
+        } message: {
+            Text("Allow camera access in Settings to add interior photos.")
+        }
+        .alert("Camera Unavailable", isPresented: $showPhotoCaptureUnavailable) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("This device cannot capture photos.")
+        }
+        .fullScreenCover(isPresented: $showInteriorPhotoCapture) {
+            InteriorPhotoCaptureView(
+                reportId: flow.reportId,
+                token: flow.token.trimmingCharacters(in: .whitespacesAndNewlines),
+                onFinish: {
+                    showInteriorPhotoCapture = false
+                    path.append(AppRoute.success)
+                }
+            )
+        }
+        .tint(Color.ergoraTeal)
+    }
+
+    private func beginInteriorPhotoCapture() {
+        guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+            showPhotoCaptureUnavailable = true
+            return
+        }
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            showInteriorPhotoCapture = true
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        showInteriorPhotoCapture = true
+                    } else {
+                        showPhotoCaptureDenied = true
+                    }
+                }
+            }
+        default:
+            showPhotoCaptureDenied = true
         }
     }
 
@@ -231,7 +297,7 @@ struct ScanResultView: View {
         isSubmitting = false
         switch result {
         case .success:
-            path.append(AppRoute.success)
+            showPostSubmitPhotoPrompt = true
         case .failure(let error):
             switch error {
             case .transport(let underlying):

@@ -48,7 +48,7 @@ enum RoomDataProcessor {
                 ?? dimensionsFromAreaM2(totalFloorAreaM2)
             rooms = [
                 RoomData(
-                    name: "Room 1",
+                    name: detectRoomType(from: room, index: 0),
                     floor: selectedFloor,
                     area: areaFt2,
                     dimensions: dims,
@@ -83,7 +83,7 @@ enum RoomDataProcessor {
                     ?? dimensionsFromAreaM2(areaM2)
 
                 return RoomData(
-                    name: "Room \(index + 1)",
+                    name: detectRoomType(from: room, index: index),
                     floor: selectedFloor,
                     area: areaFt2,
                     dimensions: dims,
@@ -312,5 +312,31 @@ enum RoomDataProcessor {
             buckets[best].append(opening)
         }
         return buckets
+    }
+
+    // MARK: - Room type from objects
+
+    /// Uses `CapturedRoom.Object.Category` cases from the RoomPlan SDK (see `RoomPlan.swiftinterface`).
+    /// Note: There is no `.shower` or `.diningTable`; bath uses `.bathtub`, dining uses `.table`.
+    private static func detectRoomType(from room: CapturedRoom, index: Int) -> String {
+        let cats = room.objects.map(\.category)
+        let hasToilet = cats.contains(.toilet)
+        let hasBath = cats.contains(.bathtub)
+        let hasBed = cats.contains(.bed)
+        let hasKitchen = cats.contains(.refrigerator) || cats.contains(.stove) || cats.contains(.oven)
+        let hasSofa = cats.contains(.sofa)
+        let hasTV = cats.contains(.television)
+        let hasWasher = cats.contains(.washerDryer)
+        let hasDining = cats.contains(.table)
+
+        if hasToilet && hasBath { return "Full Bath" }
+        if hasToilet { return "Half Bath" }
+        if hasBed { return "Bedroom" }
+        if hasKitchen { return "Kitchen" }
+        if hasWasher { return "Laundry Room" }
+        if hasSofa && hasTV { return "Living Room" }
+        if hasSofa { return "Living Room" }
+        if hasDining { return "Dining Room" }
+        return "Room \(index + 1)"
     }
 }
